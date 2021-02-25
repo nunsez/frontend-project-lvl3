@@ -2,11 +2,13 @@
   "name": "@hexlet/code",
   "version": "0.0.1",
   "description": "RSS reader",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "private": "true",
   "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "webpack serve --open"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nunsez/frontend-project-lvl3.git"
@@ -18,11 +20,23 @@
   },
   "homepage": "https://github.com/nunsez/frontend-project-lvl3#readme",
   "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^5.0.2",
     "eslint": "^7.20.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-prettier": "^8.0.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^3.3.1",
-    "prettier": "^2.2.1"
+    "html-webpack-plugin": "^5.2.0",
+    "prettier": "^2.2.1",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.24.1",
+    "webpack-cli": "^4.5.0",
+    "webpack-dev-server": "^3.11.2"
+  },
+  "dependencies": {
+    "bootstrap": "^5.0.0-beta2",
+    "lodash": "^4.17.21",
+    "popper.js": "^1.16.1"
   }
 }
