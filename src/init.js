@@ -1,9 +1,9 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import * as yup from 'yup';
+import { some } from 'lodash';
 import parse from './parsers.js';
 import initView from './view.js';
-import { some } from 'lodash';
 
 const getRss = (url, watchedState) =>
     axios

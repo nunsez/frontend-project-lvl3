@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 const itemParse = (item) => {
-    const children = item.children;
+    const { children } = item;
     const result = { id: uniqueId() };
 
     [...children].forEach((child) => {
