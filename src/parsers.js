@@ -18,7 +18,7 @@ export default (rss, link) => {
     const parserError = doc.querySelector('parsererror');
 
     if (parserError) {
-        throw new Error('Ресурс не содержит валидный RSS');
+        throw new Error('Parser error: invalid RSS format!');
     }
 
     const title = doc.querySelector('title').textContent;

@@ -1,31 +1,27 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import * as yup from 'yup';
+import i18n from 'i18next';
 import { some } from 'lodash';
+import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
-const getRss = (url, watchedState) =>
-    axios
-        .get(`https://hexlet-allorigins.herokuapp.com/get?url=${encodeURIComponent(url)}`)
-        .catch((networkError) => {
-            watchedState.rss.feedback = { type: 'error', message: networkError.message };
-        })
-        .then((response) => {
-            const { data } = response;
-            const feed = parse(data.contents, url);
+const t = i18n.t.bind(i18n);
 
-            return feed;
-        })
-        .catch((parserError) => {
-            watchedState.rss.feedback = { type: 'error', message: parserError.message };
-        });
+const getContent = (url) =>
+    axios.get(`https://hexlet-allorigins.herokuapp.com/get?url=${encodeURIComponent(url)}`).then((response) => {
+        if (response.status !== 200) {
+            throw new Error('network error');
+        }
+
+        return response.data;
+    });
 
 const validate = (url, collection) => {
-    const schema = yup.string().url('Ссылка должна быть валидным URL');
+    const schema = yup.string().url();
 
     if (some(collection, ['link', url])) {
-        return 'RSS уже существует';
+        return t('errors.alreadyExist');
     }
 
     try {
@@ -36,7 +32,40 @@ const validate = (url, collection) => {
     }
 };
 
-export default () => {
+const rssAddHandle = (watchedState) => (evt) => {
+    evt.preventDefault();
+
+    const formData = new FormData(evt.target);
+    const url = formData.get('url');
+    const validateError = validate(url, watchedState.rss.feeds);
+
+    if (validateError !== '') {
+        watchedState.rss.feedback = { type: 'error', message: validateError };
+        return;
+    }
+
+    getContent(url)
+        .catch((networtError) => {
+            // TODO !!! MUST TEST !!!
+            console.log(networtError.message);
+        })
+        .then((data) => {
+            try {
+                const feed = parse(data.contents, url);
+
+                watchedState.rss.feeds.push({ ...feed, items: undefined });
+                watchedState.rss.posts.unshift(...feed.items);
+                watchedState.rss.feedback = { type: 'success', message: i18n.t('success.downloaded') };
+            } catch {
+                watchedState.rss.feedback = { type: 'error', message: i18n.t('errors.parserError') };
+            }
+        })
+        .catch((viewError) => {
+            console.log(viewError.message);
+        });
+};
+
+const init = () => {
     const state = {
         rss: {
             feedback: {
@@ -57,27 +86,25 @@ export default () => {
     };
     const watchedState = initView(elements, state);
 
-    elements.form.addEventListener('submit', (e) => {
-        e.preventDefault();
+    elements.form.addEventListener('submit', rssAddHandle(watchedState));
+};
 
-        const formData = new FormData(e.target);
-        const url = formData.get('url');
-        const error = validate(url, state.rss.feeds);
+export default () => {
+    const defaultLanguage = 'ru';
 
-        if (error !== '') {
-            watchedState.rss.feedback = { type: 'error', message: error };
-            return;
-        }
+    i18n.init({
+        lng: defaultLanguage,
+        debug: true,
+        resources,
+    }).then(() => {
+        console.log(i18n.t('success.init'));
 
-        getRss(url, watchedState).then((feed) => {
-            if (!feed) {
-                return;
-            }
-
-            watchedState.rss.feeds.push({ ...feed, items: undefined });
-            watchedState.rss.posts.unshift(...feed.items);
-            watchedState.rss.feedback = { type: 'success', message: 'RSS успешно загружен' };
-            console.log(state.rss.posts);
+        yup.setLocale({
+            string: {
+                url: i18n.t('errors.invalidUrl'),
+            },
         });
+
+        init();
     });
 };

@@ -1,4 +1,5 @@
 import onChange from 'on-change';
+import i18n from 'i18next';
 
 const renderFeedback = (elements, value) => {
     const { type, message } = value;
@@ -26,7 +27,7 @@ const renderFeedback = (elements, value) => {
 
 const renderFeeds = (container, collection) => {
     const header = document.createElement('h2');
-    header.textContent = 'Фиды';
+    header.textContent = i18n.t('feeds');
 
     const feedList = document.createElement('ul');
     feedList.classList.add('list-group', 'mb-5');
@@ -53,7 +54,7 @@ const renderFeeds = (container, collection) => {
 
 const renderPosts = (container, collection) => {
     const header = document.createElement('h2');
-    header.textContent = 'Посты';
+    header.textContent = i18n.t('posts');
 
     const fragment = document.createDocumentFragment();
 
@@ -75,7 +76,7 @@ const renderPosts = (container, collection) => {
         titleEl.dataset.id = id;
 
         const watcButton = document.createElement('button');
-        watcButton.textContent = 'Просмотр';
+        watcButton.textContent = i18n.t('inspect');
         watcButton.classList.add('btn', 'btn-primary', 'btn-sm');
         watcButton.setAttribute('type', 'button');
         watcButton.dataset.id = id;
