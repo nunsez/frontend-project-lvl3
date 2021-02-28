@@ -65,6 +65,7 @@ const renderPosts = (container, collection) => {
         const { title, link, id } = item;
 
         const post = document.createElement('li');
+        // prettier-ignore
         post.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
 
         const titleEl = document.createElement('a');

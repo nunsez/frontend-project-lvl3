@@ -1,8 +1,6 @@
-import { uniqueId } from 'lodash';
-
 const itemParse = (item) => {
     const { children } = item;
-    const result = { id: uniqueId() };
+    const result = {};
 
     [...children].forEach((child) => {
         result[child.localName] = child.textContent;
