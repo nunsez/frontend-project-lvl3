@@ -95,7 +95,12 @@ const init = () => {
         },
     };
     const elements = {
-        modal: document.querySelector('#modal'),
+        modal: {
+            main: document.querySelector('#modal'),
+            title: document.querySelector('#modal .modal-title'),
+            body: document.querySelector('#modal .modal-body'),
+            redirect: document.querySelector('#modal a'),
+        },
         form: document.querySelector('form.rss-form'),
         feeds: document.querySelector('.container-fluid .feeds'),
         posts: document.querySelector('.container-fluid .posts'),
@@ -114,11 +119,10 @@ const init = () => {
                 .map(({ value }) => value);
 
             fulfilledFeeds.forEach((incomingFeed) => {
-                const { items, link } = incomingFeed;
-                const currentFeed = state.rss.feeds.find((feed) => feed.link === link);
+                const { items } = incomingFeed;
+                const currentFeed = state.rss.feeds.find((feed) => feed.link === incomingFeed.link);
 
                 const lastPostInState = items.find(({ guid }) => guid === currentFeed.newestGuid);
-
                 const lastPostIndex = items.indexOf(lastPostInState);
                 const newPosts = items.slice(0, lastPostIndex);
 

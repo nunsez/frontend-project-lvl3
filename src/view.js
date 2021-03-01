@@ -1,60 +1,18 @@
+import Modal from 'bootstrap.native/dist/components/modal-native.esm.js';
 import onChange from 'on-change';
 import i18n from 'i18next';
 
-const markAsRead = (element) => () => {
+const markAsRead = (element, item) => {
     const titleEl = element.querySelector('a');
     titleEl.classList.remove('font-weight-bold');
     titleEl.classList.add('font-weight-normal');
+    item.alreadyRead = true;
 };
 
-const hideModal = () => {
-    const modal = document.querySelector('#modal');
-    modal.classList.remove('show');
-    modal.removeAttribute('aria-modal');
-    modal.removeAttribute('role');
-    modal.setAttribute('aria-hidden', true);
-    modal.removeAttribute('style');
-    modal.style.display = 'none';
-
-    const parent = modal.parentElement;
-    parent.classList.remove('modal-open');
-    parent.removeAttribute('style');
-
-    const modalBackdrop = document.querySelector('.modal-backdrop');
-    modalBackdrop.remove();
-};
-
-const showModal = (modal, post) => {
-    modal.classList.add('show');
-    modal.removeAttribute('aria-hidden');
-    modal.style.paddingRight = '17px';
-    modal.style.display = 'block';
-    modal.setAttribute('aria-modal', true);
-
-    const parent = modal.parentElement;
-    parent.classList.add('modal-open');
-    parent.style.paddingRight = '17px';
-
-    const footer = parent.querySelector('footer');
-    const modalBackdrop = document.createElement('div');
-    modalBackdrop.classList.add('modal-backdrop', 'fade', 'show');
-    footer.after(modalBackdrop);
-
-    const titleEl = modal.querySelector('.modal-title');
-    titleEl.textContent = post.title;
-
-    const bodyEl = modal.querySelector('.modal-body');
-    bodyEl.textContent = post.description;
-
-    const readFullButton = modal.querySelector('.modal-footer > a');
-    readFullButton.setAttribute('href', post.link);
-
-    const escapeButton = modal.querySelector('.modal-header > .close');
-    const closeButton = modal.querySelector('.modal-footer > button');
-
-    [escapeButton, closeButton].forEach((el) => {
-        el.addEventListener('click', hideModal);
-    });
+const fillModalWithContent = (modal, item) => {
+    modal.title.textContent = item.title;
+    modal.body.textContent = item.description;
+    modal.redirect.href = item.link;
 };
 
 const renderFeedback = (elements, value) => {
@@ -89,16 +47,14 @@ const renderFeeds = (container, collection) => {
     feedList.classList.add('list-group', 'mb-5');
 
     collection.forEach((item) => {
-        const { title, description } = item;
-
         const feed = document.createElement('li');
         feed.classList.add('list-group-item');
 
         const feedHeader = document.createElement('h3');
-        feedHeader.textContent = title;
+        feedHeader.textContent = item.title;
 
         const feedDescription = document.createElement('p');
-        feedDescription.textContent = description;
+        feedDescription.textContent = item.description;
 
         feed.append(feedHeader, feedDescription);
         feedList.prepend(feed);
@@ -109,13 +65,15 @@ const renderFeeds = (container, collection) => {
 };
 
 const renderPosts = (elements, collection) => {
+    const modal = new Modal(elements.modal.main);
+
     const header = document.createElement('h2');
     header.textContent = i18n.t('posts');
 
     const fragment = document.createDocumentFragment();
 
-    const postList = document.createElement('ul');
-    postList.classList.add('list-group');
+    const postsList = document.createElement('ul');
+    postsList.classList.add('list-group');
 
     collection.forEach((item) => {
         const { title, link, id } = item;
@@ -140,12 +98,11 @@ const renderPosts = (elements, collection) => {
         watchButton.dataset.toggle = 'modal';
         watchButton.dataset.target = '#modal';
 
+        titleEl.addEventListener('click', () => markAsRead(post, item));
         watchButton.addEventListener('click', () => {
-            showModal(elements.modal, item);
-        });
-
-        [titleEl, watchButton].forEach((el) => {
-            el.addEventListener('click', markAsRead(post));
+            fillModalWithContent(elements.modal, item);
+            markAsRead(post, item);
+            modal.show();
         });
 
         post.append(titleEl, watchButton);
@@ -153,8 +110,8 @@ const renderPosts = (elements, collection) => {
     });
 
     elements.posts.innerHTML = '';
-    postList.append(fragment);
-    elements.posts.append(header, postList);
+    postsList.append(fragment);
+    elements.posts.append(header, postsList);
 };
 
 export default (elements, state) => {
