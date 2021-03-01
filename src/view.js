@@ -1,6 +1,62 @@
 import onChange from 'on-change';
 import i18n from 'i18next';
 
+const markAsRead = (element) => () => {
+    const titleEl = element.querySelector('a');
+    titleEl.classList.remove('font-weight-bold');
+    titleEl.classList.add('font-weight-normal');
+};
+
+const hideModal = () => {
+    const modal = document.querySelector('#modal');
+    modal.classList.remove('show');
+    modal.removeAttribute('aria-modal');
+    modal.removeAttribute('role');
+    modal.setAttribute('aria-hidden', true);
+    modal.removeAttribute('style');
+    modal.style.display = 'none';
+
+    const parent = modal.parentElement;
+    parent.classList.remove('modal-open');
+    parent.removeAttribute('style');
+
+    const modalBackdrop = document.querySelector('.modal-backdrop');
+    modalBackdrop.remove();
+};
+
+const showModal = (modal, post) => {
+    modal.classList.add('show');
+    modal.removeAttribute('aria-hidden');
+    modal.style.paddingRight = '17px';
+    modal.style.display = 'block';
+    modal.setAttribute('aria-modal', true);
+
+    const parent = modal.parentElement;
+    parent.classList.add('modal-open');
+    parent.style.paddingRight = '17px';
+
+    const footer = parent.querySelector('footer');
+    const modalBackdrop = document.createElement('div');
+    modalBackdrop.classList.add('modal-backdrop', 'fade', 'show');
+    footer.after(modalBackdrop);
+
+    const titleEl = modal.querySelector('.modal-title');
+    titleEl.textContent = post.title;
+
+    const bodyEl = modal.querySelector('.modal-body');
+    bodyEl.textContent = post.description;
+
+    const readFullButton = modal.querySelector('.modal-footer > a');
+    readFullButton.setAttribute('href', post.link);
+
+    const escapeButton = modal.querySelector('.modal-header > .close');
+    const closeButton = modal.querySelector('.modal-footer > button');
+
+    [escapeButton, closeButton].forEach((el) => {
+        el.addEventListener('click', hideModal);
+    });
+};
+
 const renderFeedback = (elements, value) => {
     const { type, message } = value;
     const { form, feedback } = elements;
@@ -52,7 +108,7 @@ const renderFeeds = (container, collection) => {
     container.append(header, feedList);
 };
 
-const renderPosts = (container, collection) => {
+const renderPosts = (elements, collection) => {
     const header = document.createElement('h2');
     header.textContent = i18n.t('posts');
 
@@ -76,21 +132,29 @@ const renderPosts = (container, collection) => {
         titleEl.setAttribute('rel', 'noopener noreferrer');
         titleEl.dataset.id = id;
 
-        const watcButton = document.createElement('button');
-        watcButton.textContent = i18n.t('inspect');
-        watcButton.classList.add('btn', 'btn-primary', 'btn-sm');
-        watcButton.setAttribute('type', 'button');
-        watcButton.dataset.id = id;
-        watcButton.dataset.toggle = 'modal';
-        watcButton.dataset.target = '#modal';
+        const watchButton = document.createElement('button');
+        watchButton.textContent = i18n.t('inspect');
+        watchButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        watchButton.setAttribute('type', 'button');
+        watchButton.dataset.id = id;
+        watchButton.dataset.toggle = 'modal';
+        watchButton.dataset.target = '#modal';
 
-        post.append(titleEl, watcButton);
+        watchButton.addEventListener('click', () => {
+            showModal(elements.modal, item);
+        });
+
+        [titleEl, watchButton].forEach((el) => {
+            el.addEventListener('click', markAsRead(post));
+        });
+
+        post.append(titleEl, watchButton);
         fragment.append(post);
     });
 
-    container.innerHTML = '';
+    elements.posts.innerHTML = '';
     postList.append(fragment);
-    container.append(header, postList);
+    elements.posts.append(header, postList);
 };
 
 export default (elements, state) => {
@@ -102,7 +166,7 @@ export default (elements, state) => {
                 break;
 
             case 'rss.posts':
-                renderPosts(elements.posts, value);
+                renderPosts(elements, value);
                 break;
 
             case 'rss.feedback':
