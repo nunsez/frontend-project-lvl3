@@ -6,20 +6,25 @@ import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
-const getContent = (url) =>
-    axios
-        .get(
-            `https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(
-                url
-            )}`
-        )
-        .then((response) => {
-            if (response.status !== 200) {
-                throw new Error('network error');
-            }
+const buildProxyPath = (url) => {
+    const proxyName = 'https://hexlet-allorigins.herokuapp.com';
+    const params = { disableCache: true, url };
 
-            return response.data;
-        });
+    const proxyUrl = new URL('/get', proxyName);
+    const searchParams = new URLSearchParams(params);
+    proxyUrl.search = searchParams;
+
+    return proxyUrl;
+};
+
+const getContent = (url) =>
+    axios.get(buildProxyPath(url)).then((response) => {
+        if (response.status !== 200) {
+            throw new Error('network error');
+        }
+
+        return response.data;
+    });
 
 const getFeed = (url) => {
     const feed = getContent(url)
