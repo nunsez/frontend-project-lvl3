@@ -6,19 +6,19 @@ import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
-const buildProxyPath = (url) => {
+const buildProxy = (url) => {
     const proxyName = 'https://hexlet-allorigins.herokuapp.com';
     const params = { disableCache: true, url };
 
-    const proxyUrl = new URL('/get', proxyName);
+    const proxy = new URL('/get', proxyName);
     const searchParams = new URLSearchParams(params);
-    proxyUrl.search = searchParams;
+    proxy.search = searchParams;
 
-    return proxyUrl;
+    return proxy;
 };
 
 const getContent = (url) =>
-    axios.get(buildProxyPath(url)).then((response) => {
+    axios.get(buildProxy(url)).then((response) => {
         if (response.status !== 200) {
             throw new Error('network error');
         }
@@ -26,16 +26,7 @@ const getContent = (url) =>
         return response.data;
     });
 
-const getFeed = (url) => {
-    const feed = getContent(url)
-        .catch((networtError) => {
-            // TODO !!! MUST TEST !!!
-            console.log(networtError);
-        })
-        .then((data) => parse(data.contents, url));
-
-    return feed;
-};
+const getFeed = (url) => getContent(url).then((data) => parse(data.contents, url));
 
 const validate = (url, collection) => {
     const schema = yup.string().url();
@@ -64,15 +55,21 @@ const rssAddHandle = (watchedState) => (evt) => {
         return;
     }
 
+    watchedState.rss.processState = 'getting';
+
     getFeed(url)
-        .catch((parserError) => {
-            console.log(parserError.message);
-            watchedState.rss.feedback = { type: 'error', message: i18n.t('errors.parserError') };
+        .catch((error) => {
+            const errorType = error.message === 'network error' ? 'networkError' : 'parserError';
+
+            watchedState.rss.processState = 'filling';
+            watchedState.rss.feedback = { type: 'error', message: i18n.t(`errors.${errorType}`) };
         })
         .then((feed) => {
             if (!feed) {
                 return;
             }
+
+            watchedState.rss.processState = 'filling';
 
             const newestGuid = _.head(feed.items).guid;
             const uniquedPosts = feed.items.map((item) => ({ ...item, id: _.uniqueId() }));
@@ -81,15 +78,46 @@ const rssAddHandle = (watchedState) => (evt) => {
             watchedState.rss.posts.unshift(...uniquedPosts);
             watchedState.rss.feedback = { type: 'success', message: i18n.t('success.downloaded') };
         });
-    /* .catch((viewError) => {
-            console.log(viewError.message);
-        }) */
+};
+
+const getNewPosts = (watchedState, delay) => {
+    const promises = watchedState.rss.feeds.map(({ link }) => getFeed(link));
+
+    Promise.allSettled(promises).then((results) => {
+        const fulfilledFeeds = results
+            .filter((result) => result.status === 'fulfilled')
+            .map(({ value }) => value);
+
+        fulfilledFeeds.forEach((incomingFeed) => {
+            const { items } = incomingFeed;
+            const currentFeed = watchedState.rss.feeds.find(
+                (feed) => feed.link === incomingFeed.link
+            );
+
+            const lastPostInState = items.find(({ guid }) => guid === currentFeed.newestGuid);
+            const lastPostIndex = items.indexOf(lastPostInState);
+            const newPosts = items.slice(0, lastPostIndex);
+
+            if (_.isEmpty(newPosts)) {
+                return;
+            }
+
+            const uniquedPosts = newPosts.map((item) => ({ ...item, id: _.uniqueId() }));
+
+            watchedState.rss.posts.unshift(...uniquedPosts);
+            currentFeed.newestGuid = _.head(newPosts).guid;
+        });
+    });
+
+    setTimeout(() => getNewPosts(watchedState, delay), delay);
 };
 
 const init = () => {
     const updateInterval = 5000;
     const state = {
         rss: {
+            // filling, getting
+            processState: 'filling',
             feedback: {
                 // error, success
                 type: null,
@@ -106,46 +134,21 @@ const init = () => {
             body: document.querySelector('#modal .modal-body'),
             redirect: document.querySelector('#modal a'),
         },
-        form: document.querySelector('form.rss-form'),
+        form: {
+            main: document.querySelector('form.rss-form'),
+            input: document.querySelector('form.rss-form input'),
+            button: document.querySelector('form.rss-form button'),
+        },
         feeds: document.querySelector('.container-fluid .feeds'),
         posts: document.querySelector('.container-fluid .posts'),
         feedback: document.querySelector('.container-fluid .feedback'),
     };
+
     const watchedState = initView(elements, state);
 
-    elements.form.addEventListener('submit', rssAddHandle(watchedState));
+    elements.form.main.addEventListener('submit', rssAddHandle(watchedState));
 
-    const getNewPosts = (delay) => {
-        const promises = state.rss.feeds.map(({ link }) => getFeed(link));
-
-        Promise.allSettled(promises).then((results) => {
-            const fulfilledFeeds = results
-                .filter((result) => result.status === 'fulfilled')
-                .map(({ value }) => value);
-
-            fulfilledFeeds.forEach((incomingFeed) => {
-                const { items } = incomingFeed;
-                const currentFeed = state.rss.feeds.find((feed) => feed.link === incomingFeed.link);
-
-                const lastPostInState = items.find(({ guid }) => guid === currentFeed.newestGuid);
-                const lastPostIndex = items.indexOf(lastPostInState);
-                const newPosts = items.slice(0, lastPostIndex);
-
-                if (_.isEmpty(newPosts)) {
-                    return;
-                }
-
-                const uniquedPosts = newPosts.map((item) => ({ ...item, id: _.uniqueId() }));
-
-                watchedState.rss.posts.unshift(...uniquedPosts);
-                currentFeed.newestGuid = _.head(newPosts).guid;
-            });
-        });
-
-        setTimeout(() => getNewPosts(delay), delay);
-    };
-
-    setTimeout(() => getNewPosts(updateInterval));
+    setTimeout(() => getNewPosts(watchedState, updateInterval));
 };
 
 export default () => {
@@ -156,8 +159,6 @@ export default () => {
         debug: true,
         resources,
     }).then(() => {
-        console.log(i18n.t('success.init'));
-
         yup.setLocale({
             string: {
                 url: i18n.t('errors.invalidUrl'),
