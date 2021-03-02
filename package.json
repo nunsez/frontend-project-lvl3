@@ -1,8 +1,8 @@
 {
   "name": "@hexlet/code",
   "version": "0.0.1",
-  "description": "RSS reader",
-  "private": "true",
+  "description": "RSS Reader",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
