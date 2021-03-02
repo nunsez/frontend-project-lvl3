@@ -14,13 +14,13 @@ const getProxiedUrl = (url) => {
     const searchParams = new URLSearchParams(params);
     proxy.search = searchParams;
 
-    console.log('PROXY', proxy);
+    console.log('PROXY', proxy.href);
     return proxy.href;
 };
 
 const getContent = (url) =>
     axios.get(getProxiedUrl(url)).then((response) => {
-        console.log('RESPONSE', response);
+        console.log('RESPONSE', response.status);
         if (response.status !== 200) {
             throw new Error('network error');
         }
@@ -158,17 +158,19 @@ const init = () => {
 export default () => {
     const defaultLanguage = 'ru';
 
-    i18n.init({
-        lng: defaultLanguage,
-        debug: true,
-        resources,
-    }).then(() => {
-        yup.setLocale({
-            string: {
-                url: i18n.t('errors.invalidUrl'),
-            },
-        });
+    return i18n
+        .init({
+            lng: defaultLanguage,
+            debug: true,
+            resources,
+        })
+        .then(() => {
+            yup.setLocale({
+                string: {
+                    url: i18n.t('errors.invalidUrl'),
+                },
+            });
 
-        init();
-    });
+            init();
+        });
 };
