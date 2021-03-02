@@ -21,6 +21,7 @@ const renderFeedback = (elements, value) => {
     const { form, feedback } = elements;
     const { input } = form;
 
+    console.log('MESSAGE', message);
     feedback.textContent = message;
 
     switch (type) {

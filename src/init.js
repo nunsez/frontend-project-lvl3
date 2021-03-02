@@ -14,11 +14,13 @@ const buildProxy = (url) => {
     const searchParams = new URLSearchParams(params);
     proxy.search = searchParams;
 
+    console.log('PROXY', proxy);
     return proxy;
 };
 
 const getContent = (url) =>
     axios.get(buildProxy(url)).then((response) => {
+        console.log('RESPONSE', response);
         if (response.status !== 200) {
             throw new Error('network error');
         }
@@ -59,6 +61,7 @@ const rssAddHandle = (watchedState) => (evt) => {
 
     getFeed(url)
         .catch((error) => {
+            console.log('ERRORTYPE', error);
             const errorType = error.message === 'network error' ? 'networkError' : 'parserError';
 
             watchedState.rss.processState = 'filling';
@@ -77,6 +80,7 @@ const rssAddHandle = (watchedState) => (evt) => {
             watchedState.rss.feeds.push({ ...feed, newestGuid, items: undefined });
             watchedState.rss.posts.unshift(...uniquedPosts);
             watchedState.rss.feedback = { type: 'success', message: i18n.t('success.downloaded') };
+            console.log(watchedState);
         });
 };
 
