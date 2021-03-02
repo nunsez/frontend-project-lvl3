@@ -6,6 +6,7 @@ const markAsRead = (element, item) => {
     const titleEl = element.querySelector('a');
     titleEl.classList.remove('font-weight-bold');
     titleEl.classList.add('font-weight-normal');
+
     item.alreadyRead = true;
 };
 
@@ -18,7 +19,7 @@ const fillModalWithContent = (modal, item) => {
 const renderFeedback = (elements, value) => {
     const { type, message } = value;
     const { form, feedback } = elements;
-    const { url: input } = form.elements;
+    const { input } = form;
 
     feedback.textContent = message;
 
@@ -114,12 +115,31 @@ const renderPosts = (elements, collection) => {
     elements.posts.append(header, postsList);
 };
 
+const processStateHandle = (processState, form) => {
+    switch (processState) {
+        case 'getting':
+            form.button.disabled = true;
+            break;
+
+        case 'filling':
+            form.button.disabled = false;
+            break;
+
+        default:
+            throw new Error(`Unknown state: ${processState}!`);
+    }
+};
+
 export default (elements, state) => {
     const watchedState = onChange(state, (path, value) => {
         switch (path) {
+            case 'rss.processState':
+                processStateHandle(value, elements.form);
+                break;
+
             case 'rss.feeds':
                 renderFeeds(elements.feeds, value);
-                elements.form.reset();
+                elements.form.main.reset();
                 break;
 
             case 'rss.posts':
@@ -131,7 +151,7 @@ export default (elements, state) => {
                 break;
 
             default:
-                throw new Error(`Unknown state! ${path}`);
+                break;
         }
     });
 
