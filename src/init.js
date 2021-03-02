@@ -22,7 +22,7 @@ const getContent = (url) =>
     axios.get(getProxiedUrl(url)).then((response) => {
         console.log('RESPONSE', response.status);
         if (response.status !== 200) {
-            throw new Error('network error');
+            throw new Error('no internet');
         }
 
         return response.data;
@@ -62,7 +62,7 @@ const rssAddHandle = (watchedState, i18n) => (evt) => {
     getFeed(url)
         .catch((error) => {
             console.log('ERRORTYPE', error);
-            const errorType = error.message === 'network error' ? 'networkError' : 'parserError';
+            const errorType = error.message === 'no internet' ? 'networkError' : 'parserError';
 
             watchedState.rss.processState = 'filling';
             watchedState.rss.feedback = { type: 'error', message: i18n.t(`errors.${errorType}`) };
