@@ -9,11 +9,9 @@ module.exports = {
         contentBase: './dist',
         stats: 'errors-only',
     },
-    entry: {
-        index: './src/index.js',
-    },
+    entry: './src/index.js',
     output: {
-        filename: '[name].bundle.js',
+        filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist'),
     },
     plugins: [
