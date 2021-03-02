@@ -6,7 +6,7 @@ import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
-const buildProxy = (url) => {
+const getProxiedUrl = (url) => {
     const proxyName = 'https://hexlet-allorigins.herokuapp.com';
     const params = { disableCache: true, url };
 
@@ -15,11 +15,11 @@ const buildProxy = (url) => {
     proxy.search = searchParams;
 
     console.log('PROXY', proxy);
-    return proxy;
+    return proxy.href;
 };
 
 const getContent = (url) =>
-    axios.get(buildProxy(url)).then((response) => {
+    axios.get(getProxiedUrl(url)).then((response) => {
         console.log('RESPONSE', response);
         if (response.status !== 200) {
             throw new Error('network error');
