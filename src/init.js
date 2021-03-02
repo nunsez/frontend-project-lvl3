@@ -17,8 +17,10 @@ const getProxiedUrl = (url) => {
   return proxy.href;
 };
 
-const getContent = (url) =>
-  axios.get(getProxiedUrl(url)).then((response) => {
+// prettier-ignore
+const getContent = (url) => axios
+  .get(getProxiedUrl(url))
+  .then((response) => {
     if (response.status !== 200) {
       throw new Error('no internet');
     }

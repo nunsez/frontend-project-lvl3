@@ -23,5 +23,8 @@ export default (rss, link) => {
   const description = doc.querySelector('description').textContent;
   const items = [...doc.querySelectorAll('item')].map(itemParse);
 
-  return { title, description, link, items };
+  // prettier-ignore
+  return {
+    title, description, link, items,
+  };
 };
