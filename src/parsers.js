@@ -1,27 +1,27 @@
 const itemParse = (item) => {
-    const { children } = item;
-    const result = {};
+  const { children } = item;
+  const result = {};
 
-    [...children].forEach((child) => {
-        result[child.localName] = child.textContent;
-    });
+  [...children].forEach((child) => {
+    result[child.localName] = child.textContent;
+  });
 
-    return result;
+  return result;
 };
 
 export default (rss, link) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(rss, 'application/xml');
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(rss, 'application/xml');
 
-    const parserError = doc.querySelector('parsererror');
+  const parserError = doc.querySelector('parsererror');
 
-    if (parserError) {
-        throw new Error('Parser error: invalid RSS format!');
-    }
+  if (parserError) {
+    throw new Error('Parser error: invalid RSS format!');
+  }
 
-    const title = doc.querySelector('title').textContent;
-    const description = doc.querySelector('description').textContent;
-    const items = [...doc.querySelectorAll('item')].map(itemParse);
+  const title = doc.querySelector('title').textContent;
+  const description = doc.querySelector('description').textContent;
+  const items = [...doc.querySelectorAll('item')].map(itemParse);
 
-    return { title, description, link, items };
+  return { title, description, link, items };
 };
