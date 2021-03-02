@@ -119,10 +119,12 @@ const processStateHandle = (processState, form) => {
     switch (processState) {
         case 'getting':
             form.button.disabled = true;
+            form.input.setAttribute('readonly', true);
             break;
 
         case 'filling':
             form.button.disabled = false;
+            form.input.removeAttribute('readonly');
             break;
 
         default:
