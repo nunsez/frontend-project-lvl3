@@ -7,7 +7,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/f94c0c749434ae8606b4/maintainability)](https://codeclimate.com/github/nunsez/frontend-project-lvl3/maintainability)
 (_...in developing_)
 
-**Rss Reader** is a service for aggregating RSS feeds, with the help of which it is convenient to read various sources, for example, blogs. It allows you to add an unlimited number of RSS feeds, update them and add new posts to the general feed.
+**RSS Reader** is a service for aggregating RSS feeds, with the help of which it is convenient to read various sources, for example, blogs. It allows you to add an unlimited number of RSS feeds, update them and add new posts to the general feed.
 
 **Click [here](https://frontend-project-lvl3-gules.vercel.app/) to try RSS Reader!**
 
