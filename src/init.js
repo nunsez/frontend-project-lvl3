@@ -14,7 +14,7 @@ const buildProxy = (url) => {
     const searchParams = new URLSearchParams(params);
     proxy.search = searchParams;
 
-    return proxy;
+    return proxy.href;
 };
 
 const getContent = (url) =>
