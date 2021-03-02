@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as yup from 'yup';
-import i18n from 'i18next';
+import i18next from 'i18next';
 import _ from 'lodash';
 import resources from './locales/index.js';
 import parse from './parsers.js';
@@ -30,7 +30,7 @@ const getContent = (url) =>
 
 const getFeed = (url) => getContent(url).then((data) => parse(data.contents, url));
 
-const validate = (url, collection) => {
+const validate = (url, collection, i18n) => {
     const schema = yup.string().url();
 
     if (_.some(collection, ['link', url])) {
@@ -45,12 +45,12 @@ const validate = (url, collection) => {
     }
 };
 
-const rssAddHandle = (watchedState) => (evt) => {
+const rssAddHandle = (watchedState, i18n) => (evt) => {
     evt.preventDefault();
 
     const formData = new FormData(evt.target);
     const url = formData.get('url');
-    const validateError = validate(url, watchedState.rss.feeds);
+    const validateError = validate(url, watchedState.rss.feeds, i18n);
 
     if (validateError !== '') {
         watchedState.rss.feedback = { type: 'error', message: validateError };
@@ -116,7 +116,7 @@ const getNewPosts = (watchedState, delay) => {
     setTimeout(() => getNewPosts(watchedState, delay), delay);
 };
 
-const init = () => {
+const init = (i18n) => {
     const updateInterval = 5000;
     const state = {
         rss: {
@@ -148,29 +148,28 @@ const init = () => {
         feedback: document.querySelector('.container-fluid .feedback'),
     };
 
-    const watchedState = initView(elements, state);
+    const watchedState = initView(elements, state, i18n);
 
-    elements.form.main.addEventListener('submit', rssAddHandle(watchedState));
+    elements.form.main.addEventListener('submit', rssAddHandle(watchedState, i18n));
 
     setTimeout(() => getNewPosts(watchedState, updateInterval));
 };
 
 export default () => {
     const defaultLanguage = 'ru';
+    const i18n = i18next.createInstance();
 
-    return i18n
-        .init({
-            lng: defaultLanguage,
-            debug: true,
-            resources,
-        })
-        .then(() => {
-            yup.setLocale({
-                string: {
-                    url: i18n.t('errors.invalidUrl'),
-                },
-            });
-
-            init();
+    i18n.init({
+        lng: defaultLanguage,
+        debug: true,
+        resources,
+    }).then(() => {
+        yup.setLocale({
+            string: {
+                url: i18n.t('errors.invalidUrl'),
+            },
         });
+
+        init(i18n);
+    });
 };

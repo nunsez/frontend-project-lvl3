@@ -1,6 +1,5 @@
 import Modal from 'bootstrap.native/dist/components/modal-native.js';
 import onChange from 'on-change';
-import i18n from 'i18next';
 
 const markAsRead = (element, item) => {
     const titleEl = element.querySelector('a');
@@ -41,7 +40,7 @@ const renderFeedback = (elements, value) => {
     }
 };
 
-const renderFeeds = (container, collection) => {
+const renderFeeds = (container, collection, i18n) => {
     const header = document.createElement('h2');
     header.textContent = i18n.t('feeds');
 
@@ -66,7 +65,7 @@ const renderFeeds = (container, collection) => {
     container.append(header, feedList);
 };
 
-const renderPosts = (elements, collection) => {
+const renderPosts = (elements, collection, i18n) => {
     const modal = new Modal(elements.modal.main);
 
     const header = document.createElement('h2');
@@ -131,7 +130,7 @@ const processStateHandle = (processState, form) => {
     }
 };
 
-export default (elements, state) => {
+export default (elements, state, i18n) => {
     const watchedState = onChange(state, (path, value) => {
         switch (path) {
             case 'rss.processState':
@@ -139,12 +138,12 @@ export default (elements, state) => {
                 break;
 
             case 'rss.feeds':
-                renderFeeds(elements.feeds, value);
+                renderFeeds(elements.feeds, value, i18n);
                 elements.form.main.reset();
                 break;
 
             case 'rss.posts':
-                renderPosts(elements, value);
+                renderPosts(elements, value, i18n);
                 break;
 
             case 'rss.feedback':
