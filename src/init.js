@@ -30,12 +30,9 @@ const getContent = (url) => axios
 
 const getFeed = (url) => getContent(url).then((data) => parse(data.contents, url));
 
-const validate = (url, collection, i18n) => {
-  const schema = yup.string().url();
-
-  if (_.some(collection, ['link', url])) {
-    return i18n.t('errors.alreadyExist');
-  }
+const validate = (url, collection) => {
+  const feedLinks = collection.map(({ link }) => link);
+  const schema = yup.string().url().notOneOf(feedLinks);
 
   try {
     schema.validateSync(url);
@@ -50,7 +47,7 @@ const rssAddHandle = (watchedState, i18n) => (evt) => {
 
   const formData = new FormData(evt.target);
   const url = formData.get('url');
-  const validateError = validate(url, watchedState.rss.feeds, i18n);
+  const validateError = validate(url, watchedState.rss.feeds);
 
   if (validateError !== '') {
     watchedState.rss.feedback = { type: 'error', message: validateError };
@@ -165,6 +162,9 @@ export default () => {
       yup.setLocale({
         string: {
           url: i18n.t('errors.invalidUrl'),
+        },
+        mixed: {
+          notOneOf: i18n.t('errors.alreadyExist'),
         },
       });
 
