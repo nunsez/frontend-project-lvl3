@@ -6,9 +6,8 @@ import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
-const schema = yup.string().url();
-
 const validate = (url, collection) => {
+  const schema = yup.string().url();
   const feedLinks = collection.map(({ link }) => link);
 
   return schema.notOneOf(feedLinks).validateSync(url);
@@ -147,7 +146,7 @@ export default () => {
     .then(() => {
       yup.setLocale({
         string: {
-          url: i18n.t('errors.invalidUrl'),
+          url: i18n.t('errors.unvalidUrl'),
         },
         mixed: {
           notOneOf: i18n.t('errors.alreadyExist'),
