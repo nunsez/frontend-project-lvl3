@@ -1,12 +1,13 @@
 const itemParse = (item) => {
-  const { children } = item;
-  const result = {};
+  const title = item.querySelector('title').textContent;
+  const description = item.querySelector('description').textContent;
+  const link = item.querySelector('link').textContent;
+  const guid = item.querySelector('guid').textContent;
 
-  [...children].forEach((child) => {
-    result[child.localName] = child.textContent;
-  });
-
-  return result;
+  // prettier-ignore
+  return {
+    title, description, link, guid,
+  };
 };
 
 export default (rss, link) => {
@@ -16,7 +17,7 @@ export default (rss, link) => {
   const parserError = doc.querySelector('parsererror');
 
   if (parserError) {
-    throw new Error('Parser error: invalid RSS format!');
+    throw new Error(parserError.textContent);
   }
 
   const title = doc.querySelector('title').textContent;

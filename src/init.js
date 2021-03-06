@@ -6,6 +6,19 @@ import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
+const schema = yup.string().url();
+
+const validate = (url, collection) => {
+  const feedLinks = collection.map(({ link }) => link);
+
+  return schema.notOneOf(feedLinks).validateSync(url);
+};
+
+const addPosts = (posts, collection) => {
+  const uniquedPosts = posts.map((item) => ({ ...item, id: _.uniqueId() }));
+  collection.unshift(...uniquedPosts);
+};
+
 const getProxiedUrl = (url) => {
   const proxyName = 'https://hexlet-allorigins.herokuapp.com';
   const params = { disableCache: true, url };
@@ -18,107 +31,80 @@ const getProxiedUrl = (url) => {
 };
 
 // prettier-ignore
-const getContent = (url) => axios
-  .get(getProxiedUrl(url))
-  .then((response) => {
-    if (response.status !== 200) {
-      throw new Error('no internet');
-    }
+const getFeed = (url) => (
+  axios.get(getProxiedUrl(url)).then(({ data }) => parse(data.contents, url))
+);
 
-    return response.data;
-  });
-
-const getFeed = (url) => getContent(url).then((data) => parse(data.contents, url));
-
-const validate = (url, collection) => {
-  const feedLinks = collection.map(({ link }) => link);
-  const schema = yup.string().url().notOneOf(feedLinks);
-
-  try {
-    schema.validateSync(url);
-    return '';
-  } catch (error) {
-    return error.message;
-  }
-};
-
-const rssAddHandle = (watchedState, i18n) => (evt) => {
+const rssAddHandle = (watchedState) => (evt) => {
   evt.preventDefault();
 
   const formData = new FormData(evt.target);
   const url = formData.get('url');
-  const validateError = validate(url, watchedState.rss.feeds);
 
-  if (validateError !== '') {
-    watchedState.rss.feedback = { type: 'error', message: validateError };
-    return;
+  try {
+    validate(url, watchedState.rss.feeds);
+
+    watchedState.rss.valid = { state: 'valid', error: null };
+    watchedState.rss.process = { state: 'getting', error: null };
+
+    getFeed(url)
+      .then((feed) => {
+        watchedState.rss.process = { state: 'finished', error: null };
+        watchedState.rss.feeds.push(_.omit(feed, 'items'));
+
+        addPosts(feed.items, watchedState.rss.posts);
+      })
+      .catch((error) => {
+        if (error.isAxiosError) {
+          watchedState.rss.process = { state: 'failed', error: 'networkError' };
+        } else {
+          watchedState.rss.process = { state: 'failed', error: 'parserError' };
+        }
+      });
+  } catch (validateError) {
+    watchedState.rss.valid = { state: 'unvalid', error: validateError };
   }
-
-  watchedState.rss.processState = 'getting';
-
-  getFeed(url)
-    .catch((error) => {
-      const errorType = error.message === 'no internet' ? 'networkError' : 'parserError';
-
-      watchedState.rss.processState = 'filling';
-      watchedState.rss.feedback = { type: 'error', message: i18n.t(`errors.${errorType}`) };
-    })
-    .then((feed) => {
-      if (!feed) {
-        return;
-      }
-
-      watchedState.rss.processState = 'filling';
-
-      const newestGuid = _.head(feed.items).guid;
-      const uniquedPosts = feed.items.map((item) => ({ ...item, id: _.uniqueId() }));
-
-      watchedState.rss.feeds.push({ ...feed, newestGuid, items: undefined });
-      watchedState.rss.posts.unshift(...uniquedPosts);
-      watchedState.rss.feedback = { type: 'success', message: i18n.t('success.downloaded') };
-    });
 };
 
 const getNewPosts = (watchedState, delay) => {
   const promises = watchedState.rss.feeds.map(({ link }) => getFeed(link));
 
-  Promise.allSettled(promises).then((results) => {
-    const fulfilledFeeds = results
-      .filter((result) => result.status === 'fulfilled')
-      .map(({ value }) => value);
+  Promise.allSettled(promises)
+    .then((results) => {
+      const fulfilledFeeds = results
+        .filter((result) => result.status === 'fulfilled')
+        .map(({ value }) => value);
 
-    fulfilledFeeds.forEach((incomingFeed) => {
-      const { items } = incomingFeed;
-      const currentFeed = watchedState.rss.feeds.find((feed) => feed.link === incomingFeed.link);
+      fulfilledFeeds.forEach((incomingFeed) => {
+        const { items: incomingPosts } = incomingFeed;
+        const currentPosts = watchedState.rss.posts;
+        const newPosts = _.differenceBy(incomingPosts, currentPosts, 'guid');
 
-      const lastPostInState = items.find(({ guid }) => guid === currentFeed.newestGuid);
-      const lastPostIndex = items.indexOf(lastPostInState);
-      const newPosts = items.slice(0, lastPostIndex);
+        if (_.isEmpty(newPosts)) {
+          return;
+        }
 
-      if (_.isEmpty(newPosts)) {
-        return;
-      }
-
-      const uniquedPosts = newPosts.map((item) => ({ ...item, id: _.uniqueId() }));
-
-      watchedState.rss.posts.unshift(...uniquedPosts);
-      currentFeed.newestGuid = _.head(newPosts).guid;
+        addPosts(newPosts, currentPosts);
+      });
+    })
+    .finally(() => {
+      setTimeout(() => getNewPosts(watchedState, delay), delay);
     });
-  });
-
-  setTimeout(() => getNewPosts(watchedState, delay), delay);
 };
 
 const init = (i18n) => {
   const updateInterval = 5000;
   const state = {
     rss: {
-      // filling, getting
-      processState: 'filling',
-      feedback: {
-        // error, success
-        type: null,
-        message: null,
+      process: {
+        // finished, getting, failed, ready
+        state: 'ready',
+        error: null,
+      },
+      valid: {
+        // valid, unvalid
+        state: 'valid',
+        error: null,
       },
       feeds: [],
       posts: [],
