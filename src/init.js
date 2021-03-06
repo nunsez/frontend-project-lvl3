@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as yup from 'yup';
 import i18next from 'i18next';
 import _ from 'lodash';
+import 'bootstrap';
 import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
@@ -140,7 +141,6 @@ export default () => {
   i18n
     .init({
       lng: defaultLanguage,
-      debug: true,
       resources,
     })
     .then(() => {

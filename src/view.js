@@ -1,4 +1,3 @@
-import Modal from 'bootstrap.native/dist/components/modal-native.js';
 import onChange from 'on-change';
 
 const markAsRead = (element, item) => {
@@ -76,8 +75,6 @@ export default (elements, appState, i18n) => {
   };
 
   const renderPosts = (collection) => {
-    const modal = new Modal(elements.modal.main);
-
     const header = document.createElement('h2');
     header.textContent = i18n.t('posts');
 
@@ -113,7 +110,6 @@ export default (elements, appState, i18n) => {
       watchButton.addEventListener('click', () => {
         fillModalWithContent(elements.modal, item);
         markAsRead(post, item);
-        modal.show();
       });
 
       post.append(titleEl, watchButton);
