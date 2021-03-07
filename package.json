@@ -1,13 +1,11 @@
 {
   "name": "@hexlet/code",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "RSS Reader",
   "main": "src/init.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "start": "webpack serve --open"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
