@@ -7,13 +7,6 @@ import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
 
-const validate = (url, collection) => {
-  const schema = yup.string().url();
-  const feedLinks = collection.map(({ link }) => link);
-
-  return schema.notOneOf(feedLinks).validateSync(url);
-};
-
 const addPosts = (posts, collection) => {
   const uniquedPosts = posts.map((item) => ({ ...item, id: _.uniqueId() }));
   collection.unshift(...uniquedPosts);
@@ -35,7 +28,7 @@ const getFeed = (url) => (
   axios.get(getProxiedUrl(url)).then(({ data }) => parse(data.contents, url))
 );
 
-const rssAddHandle = (watchedState) => (evt) => {
+const rssAddHandle = (watchedState, validate) => (evt) => {
   evt.preventDefault();
 
   const formData = new FormData(evt.target);
@@ -93,6 +86,7 @@ const getNewPosts = (watchedState, delay) => {
 };
 
 const init = (i18n) => {
+  const schema = yup.string().url();
   const updateInterval = 5000;
   const state = {
     rss: {
@@ -129,7 +123,13 @@ const init = (i18n) => {
 
   const watchedState = initView(elements, state, i18n);
 
-  elements.form.main.addEventListener('submit', rssAddHandle(watchedState, i18n));
+  const validate = (url, collection) => {
+    const feedLinks = collection.map(({ link }) => link);
+
+    return schema.notOneOf(feedLinks).validateSync(url);
+  };
+
+  elements.form.main.addEventListener('submit', rssAddHandle(watchedState, validate));
 
   setTimeout(() => getNewPosts(watchedState, updateInterval));
 };
