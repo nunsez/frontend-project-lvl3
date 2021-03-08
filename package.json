@@ -1,6 +1,6 @@
 {
   "name": "@hexlet/code",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "RSS Reader",
   "main": "src/init.js",
   "type": "module",

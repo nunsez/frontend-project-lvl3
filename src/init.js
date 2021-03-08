@@ -35,32 +35,34 @@ const rssAddHandle = (watchedState, validate) => (evt) => {
   const url = formData.get('url');
 
   try {
-    validate(url, watchedState.rss.feeds);
-
-    watchedState.rss.valid = { state: 'valid', error: null };
-    watchedState.rss.process = { state: 'getting', error: null };
+    validate(url, watchedState.feeds);
+    watchedState.process.state = 'getting';
 
     getFeed(url)
       .then((feed) => {
-        watchedState.rss.process = { state: 'finished', error: null };
-        watchedState.rss.feeds.push(_.omit(feed, 'items'));
+        watchedState.process.error = null;
+        watchedState.process.state = 'finished';
+        watchedState.feeds.push(_.omit(feed, 'items'));
 
-        addPosts(feed.items, watchedState.rss.posts);
+        addPosts(feed.items, watchedState.posts);
       })
       .catch((error) => {
         if (error.isAxiosError) {
-          watchedState.rss.process = { state: 'failed', error: 'networkError' };
+          watchedState.process.error = 'networkError';
         } else {
-          watchedState.rss.process = { state: 'failed', error: 'parserError' };
+          watchedState.process.error = 'parserError';
         }
+
+        watchedState.process.state = 'failed';
       });
   } catch (validateError) {
-    watchedState.rss.valid = { state: 'unvalid', error: validateError };
+    watchedState.form.error = validateError;
+    watchedState.form.state = 'unvalid';
   }
 };
 
 const getNewPosts = (watchedState, delay) => {
-  const promises = watchedState.rss.feeds.map(({ link }) => getFeed(link));
+  const promises = watchedState.feeds.map(({ link }) => getFeed(link));
 
   Promise.allSettled(promises)
     .then((results) => {
@@ -70,7 +72,7 @@ const getNewPosts = (watchedState, delay) => {
 
       fulfilledFeeds.forEach((incomingFeed) => {
         const { items: incomingPosts } = incomingFeed;
-        const currentPosts = watchedState.rss.posts;
+        const currentPosts = watchedState.posts;
         const newPosts = _.differenceBy(incomingPosts, currentPosts, 'guid');
 
         if (_.isEmpty(newPosts)) {
@@ -89,20 +91,18 @@ const init = (i18n) => {
   const schema = yup.string().url();
   const updateInterval = 5000;
   const state = {
-    rss: {
-      process: {
-        // finished, getting, failed, ready
-        state: 'ready',
-        error: null,
-      },
-      valid: {
-        // valid, unvalid
-        state: 'valid',
-        error: null,
-      },
-      feeds: [],
-      posts: [],
+    process: {
+      // finished, getting, failed, ready
+      state: 'ready',
+      error: null,
     },
+    form: {
+      // valid, unvalid
+      state: 'valid',
+      error: null,
+    },
+    feeds: [],
+    posts: [],
   };
   const elements = {
     modal: {

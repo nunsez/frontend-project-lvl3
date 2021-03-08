@@ -121,8 +121,7 @@ export default (elements, appState, i18n) => {
     elements.posts.append(header, postsList);
   };
 
-  const processStateHandle = (processState) => {
-    const { state, error } = processState;
+  const processStateHandle = ({ state, error }) => {
     const { form, feedback } = elements;
 
     switch (state) {
@@ -157,25 +156,25 @@ export default (elements, appState, i18n) => {
       }
 
       default:
-        throw new Error(`Unknown state: ${processState}!`);
+        throw new Error(`Unknown process state: ${state}!`);
     }
   };
 
   const watchedState = onChange(appState, (path, value) => {
     switch (path) {
-      case 'rss.valid':
-        renderValid(elements, value);
+      case 'form.state':
+        renderValid(elements, watchedState.form);
         break;
 
-      case 'rss.process':
-        processStateHandle(value);
+      case 'process.state':
+        processStateHandle(watchedState.process);
         break;
 
-      case 'rss.feeds':
+      case 'feeds':
         renderFeeds(value);
         break;
 
-      case 'rss.posts':
+      case 'posts':
         renderPosts(value);
         break;
 
