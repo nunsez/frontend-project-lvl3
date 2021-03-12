@@ -146,10 +146,10 @@ export default () => {
     .then(() => {
       yup.setLocale({
         string: {
-          url: i18n.t('errors.unvalidUrl'),
+          url: 'errors.unvalidUrl',
         },
         mixed: {
-          notOneOf: i18n.t('errors.alreadyExist'),
+          notOneOf: 'errors.alreadyExist',
         },
       });
 

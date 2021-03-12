@@ -32,23 +32,24 @@ const renderFeedback = (feedback, message = '', type = 'success') => {
   }
 };
 
-const renderValid = (elements, { state, error }) => {
-  switch (state) {
-    case 'valid':
-      renderFeedback(elements.feedback);
-      break;
-
-    case 'unvalid': {
-      renderFeedback(elements.feedback, error.message, 'error');
-      break;
-    }
-
-    default:
-      break;
-  }
-};
-
 export default (elements, appState, i18n) => {
+  const renderValid = ({ state, error }) => {
+    switch (state) {
+      case 'valid':
+        renderFeedback(elements.feedback);
+        break;
+
+      case 'unvalid': {
+        const message = i18n.t(error.message);
+        renderFeedback(elements.feedback, message, 'error');
+        break;
+      }
+
+      default:
+        break;
+    }
+  };
+
   const renderFeeds = (collection) => {
     const header = document.createElement('h2');
     header.textContent = i18n.t('feeds');
@@ -163,7 +164,7 @@ export default (elements, appState, i18n) => {
   const watchedState = onChange(appState, (path, value) => {
     switch (path) {
       case 'form.state':
-        renderValid(elements, watchedState.form);
+        renderValid(watchedState.form);
         break;
 
       case 'process.state':
