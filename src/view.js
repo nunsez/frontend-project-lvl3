@@ -2,12 +2,9 @@
 
 import onChange from 'on-change';
 
-const markAsRead = (element, item) => {
-  const titleEl = element.querySelector('a');
+const markAsRead = (titleEl) => {
   titleEl.classList.remove('font-weight-bold');
   titleEl.classList.add('font-weight-normal');
-
-  item.alreadyRead = true;
 };
 
 const fillModalWithContent = (modal, item) => {
@@ -101,6 +98,10 @@ export default (elements, appState, i18n) => {
       titleEl.setAttribute('rel', 'noopener noreferrer');
       titleEl.dataset.id = id;
 
+      if (appState.readPostsIds.has(id)) {
+        markAsRead(titleEl);
+      }
+
       const watchButton = document.createElement('button');
       watchButton.textContent = i18n.t('inspect');
       watchButton.classList.add('btn', 'btn-primary', 'btn-sm');
@@ -109,11 +110,7 @@ export default (elements, appState, i18n) => {
       watchButton.dataset.toggle = 'modal';
       watchButton.dataset.target = '#modal';
 
-      titleEl.addEventListener('click', () => markAsRead(post, item));
-      watchButton.addEventListener('click', () => {
-        fillModalWithContent(elements.modal, item);
-        markAsRead(post, item);
-      });
+      watchButton.addEventListener('click', () => fillModalWithContent(elements.modal, item));
 
       post.append(titleEl, watchButton);
       fragment.append(post);
@@ -180,6 +177,12 @@ export default (elements, appState, i18n) => {
       case 'posts':
         renderPosts(value);
         break;
+
+      case 'lastReadPostId': {
+        const titleEl = elements.posts.querySelector(`a[data-id="${value}"]`);
+        markAsRead(titleEl);
+        break;
+      }
 
       default:
         break;

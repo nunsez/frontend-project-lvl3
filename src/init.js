@@ -30,6 +30,17 @@ const getFeed = (url) => (
   axios.get(getProxiedUrl(url)).then(({ data }) => parse(data.contents, url))
 );
 
+const markAsReadHandle = (watchedState) => (evt) => {
+  const { id } = evt.target.dataset;
+
+  if (!id || watchedState.readPostsIds.has(id)) {
+    return;
+  }
+
+  watchedState.readPostsIds.add(id);
+  watchedState.lastReadPostId = id;
+};
+
 const rssAddHandle = (watchedState, validate) => (evt) => {
   evt.preventDefault();
 
@@ -105,6 +116,8 @@ const init = (i18n) => {
     },
     feeds: [],
     posts: [],
+    lastReadPostId: null,
+    readPostsIds: new Set(),
   };
   const elements = {
     modal: {
@@ -132,6 +145,7 @@ const init = (i18n) => {
   };
 
   elements.form.main.addEventListener('submit', rssAddHandle(watchedState, validate));
+  elements.posts.addEventListener('click', markAsReadHandle(watchedState));
 
   setTimeout(() => getNewPosts(watchedState, updateInterval));
 };
