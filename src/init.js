@@ -73,7 +73,7 @@ const getNewPosts = (watchedState, delay) => {
       fulfilledFeeds.forEach((incomingFeed) => {
         const { items: incomingPosts } = incomingFeed;
         const currentPosts = watchedState.posts;
-        const newPosts = _.differenceBy(incomingPosts, currentPosts, 'guid');
+        const newPosts = _.differenceBy(incomingPosts, currentPosts, 'link');
 
         if (_.isEmpty(newPosts)) {
           return;

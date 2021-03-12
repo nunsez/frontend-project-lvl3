@@ -2,11 +2,10 @@ const itemParse = (item) => {
   const title = item.querySelector('title').textContent;
   const description = item.querySelector('description').textContent;
   const link = item.querySelector('link').textContent;
-  const guid = item.querySelector('guid').textContent;
 
   // prettier-ignore
   return {
-    title, description, link, guid,
+    title, description, link,
   };
 };
 
