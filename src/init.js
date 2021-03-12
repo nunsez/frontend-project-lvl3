@@ -15,14 +15,14 @@ const addPosts = (posts, collection) => {
 };
 
 const getProxiedUrl = (url) => {
-  const proxyName = 'https://hexlet-allorigins.herokuapp.com';
+  const proxy = 'https://hexlet-allorigins.herokuapp.com';
   const params = { disableCache: true, url };
 
-  const proxy = new URL('/get', proxyName);
+  const proxyUrl = new URL('/get', proxy);
   const searchParams = new URLSearchParams(params);
-  proxy.search = searchParams;
+  proxyUrl.search = searchParams;
 
-  return proxy.href;
+  return proxyUrl.toString();
 };
 
 // prettier-ignore
