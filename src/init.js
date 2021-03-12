@@ -43,35 +43,39 @@ const markAsReadHandle = (watchedState) => (evt) => {
 
 const rssAddHandle = (watchedState, validate) => (evt) => {
   evt.preventDefault();
+  watchedState.form.state = null;
 
   const formData = new FormData(evt.target);
   const url = formData.get('url');
 
-  try {
-    validate(url, watchedState.feeds);
-    watchedState.process.state = 'getting';
+  const validateError = validate(url, watchedState.feeds);
 
-    getFeed(url)
-      .then((feed) => {
-        watchedState.process.error = null;
-        watchedState.process.state = 'finished';
-        watchedState.feeds.push(_.omit(feed, 'items'));
-
-        addPosts(feed.items, watchedState.posts);
-      })
-      .catch((error) => {
-        if (error.isAxiosError) {
-          watchedState.process.error = 'networkError';
-        } else {
-          watchedState.process.error = 'parserError';
-        }
-
-        watchedState.process.state = 'failed';
-      });
-  } catch (validateError) {
+  if (validateError !== null) {
     watchedState.form.error = validateError;
     watchedState.form.state = 'unvalid';
+
+    return;
   }
+
+  watchedState.process.state = 'getting';
+
+  getFeed(url)
+    .then((feed) => {
+      watchedState.process.error = null;
+      watchedState.process.state = 'finished';
+      watchedState.feeds.push(_.omit(feed, 'items'));
+
+      addPosts(feed.items, watchedState.posts);
+    })
+    .catch((error) => {
+      if (error.isAxiosError) {
+        watchedState.process.error = 'networkError';
+      } else {
+        watchedState.process.error = 'parserError';
+      }
+
+      watchedState.process.state = 'failed';
+    });
 };
 
 const getNewPosts = (watchedState, delay) => {
@@ -105,13 +109,13 @@ const init = (i18n) => {
   const updateInterval = 5000;
   const state = {
     process: {
-      // finished, getting, failed, ready
+      // ready, getting, finished, failed
       state: 'ready',
       error: null,
     },
     form: {
-      // valid, unvalid
-      state: 'valid',
+      // null, valid, unvalid
+      state: null,
       error: null,
     },
     feeds: [],
@@ -141,7 +145,12 @@ const init = (i18n) => {
   const validate = (url, collection) => {
     const feedLinks = collection.map(({ link }) => link);
 
-    return schema.notOneOf(feedLinks).validateSync(url);
+    try {
+      schema.notOneOf(feedLinks).validateSync(url);
+      return null;
+    } catch (error) {
+      return error;
+    }
   };
 
   elements.form.main.addEventListener('submit', rssAddHandle(watchedState, validate));

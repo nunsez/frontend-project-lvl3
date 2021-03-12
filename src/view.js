@@ -44,8 +44,12 @@ export default (elements, appState, i18n) => {
         break;
       }
 
-      default:
+      // clear previous state before validate
+      case null:
         break;
+
+      default:
+        throw new Error(`Unknown validation state: ${state}!`);
     }
   };
 
