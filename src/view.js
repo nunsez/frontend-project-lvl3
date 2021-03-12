@@ -94,17 +94,14 @@ export default (elements, appState, i18n) => {
       post.classList.add('list-group-item', 'd-flex');
       post.classList.add('justify-content-between', 'align-items-start');
 
+      const fontWeightType = appState.readPostsIds.has(id) ? 'normal' : 'bold';
       const titleEl = document.createElement('a');
       titleEl.textContent = title;
-      titleEl.classList.add('font-weight-bold');
+      titleEl.classList.add(`font-weight-${fontWeightType}`);
       titleEl.setAttribute('href', link);
       titleEl.setAttribute('target', '_blank');
       titleEl.setAttribute('rel', 'noopener noreferrer');
       titleEl.dataset.id = id;
-
-      if (appState.readPostsIds.has(id)) {
-        markAsRead(titleEl);
-      }
 
       const watchButton = document.createElement('button');
       watchButton.textContent = i18n.t('inspect');
