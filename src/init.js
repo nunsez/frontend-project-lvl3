@@ -1,111 +1,14 @@
 /* eslint-disable no-param-reassign */
 
-import axios from 'axios';
 import * as yup from 'yup';
 import i18next from 'i18next';
-import _ from 'lodash';
 import 'bootstrap';
 import resources from './locales/index.js';
-import parse from './parsers.js';
 import initView from './view.js';
-
-const addPosts = (posts, collection) => {
-  const uniquedPosts = posts.map((item) => ({ ...item, id: _.uniqueId() }));
-  collection.unshift(...uniquedPosts);
-};
-
-const getProxiedUrl = (url) => {
-  const proxy = 'https://hexlet-allorigins.herokuapp.com';
-  const params = { disableCache: true, url };
-
-  const proxyUrl = new URL('/get', proxy);
-  const searchParams = new URLSearchParams(params);
-  proxyUrl.search = searchParams;
-
-  return proxyUrl.toString();
-};
-
-// prettier-ignore
-const getFeed = (url) => (
-  axios.get(getProxiedUrl(url)).then(({ data }) => parse(data.contents, url))
-);
-
-const markAsReadHandle = (watchedState) => (evt) => {
-  const { id } = evt.target.dataset;
-
-  if (!id || watchedState.readPostsIds.has(id)) {
-    return;
-  }
-
-  watchedState.readPostsIds.add(id);
-  watchedState.lastReadPostId = id;
-};
-
-const rssAddHandle = (watchedState, validate) => (evt) => {
-  evt.preventDefault();
-  watchedState.form.state = null;
-
-  const formData = new FormData(evt.target);
-  const url = formData.get('url');
-
-  const validateError = validate(url, watchedState.feeds);
-
-  if (validateError !== null) {
-    watchedState.form.error = validateError;
-    watchedState.form.state = 'unvalid';
-
-    return;
-  }
-
-  watchedState.process.state = 'getting';
-
-  getFeed(url)
-    .then((feed) => {
-      watchedState.process.error = null;
-      watchedState.process.state = 'finished';
-      watchedState.feeds.push(_.omit(feed, 'items'));
-
-      addPosts(feed.items, watchedState.posts);
-    })
-    .catch((error) => {
-      if (error.isAxiosError) {
-        watchedState.process.error = 'networkError';
-      } else {
-        watchedState.process.error = 'parserError';
-      }
-
-      watchedState.process.state = 'failed';
-    });
-};
-
-const getNewPosts = (watchedState, delay) => {
-  const promises = watchedState.feeds.map(({ link }) => getFeed(link));
-
-  Promise.allSettled(promises)
-    .then((results) => {
-      const fulfilledFeeds = results
-        .filter((result) => result.status === 'fulfilled')
-        .map(({ value }) => value);
-
-      fulfilledFeeds.forEach((incomingFeed) => {
-        const { items: incomingPosts } = incomingFeed;
-        const currentPosts = watchedState.posts;
-        const newPosts = _.differenceBy(incomingPosts, currentPosts, 'link');
-
-        if (_.isEmpty(newPosts)) {
-          return;
-        }
-
-        addPosts(newPosts, currentPosts);
-      });
-    })
-    .finally(() => {
-      setTimeout(() => getNewPosts(watchedState, delay), delay);
-    });
-};
+import handler from './handlers.js';
+import { getNewPosts } from './utils.js';
 
 const init = (i18n) => {
-  const schema = yup.string().url();
   const updateInterval = 5000;
   const state = {
     process: {
@@ -142,19 +45,8 @@ const init = (i18n) => {
 
   const watchedState = initView(elements, state, i18n);
 
-  const validate = (url, collection) => {
-    const feedLinks = collection.map(({ link }) => link);
-
-    try {
-      schema.notOneOf(feedLinks).validateSync(url);
-      return null;
-    } catch (error) {
-      return error;
-    }
-  };
-
-  elements.form.main.addEventListener('submit', rssAddHandle(watchedState, validate));
-  elements.posts.addEventListener('click', markAsReadHandle(watchedState));
+  elements.form.main.addEventListener('submit', handler.rssAdd(watchedState));
+  elements.posts.addEventListener('click', handler.markAsRead(watchedState));
 
   setTimeout(() => getNewPosts(watchedState, updateInterval));
 };
