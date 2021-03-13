@@ -112,5 +112,5 @@ const posts = (elements, collection, appState, i18n) => {
 
 // prettier-ignore
 export default {
-  feedback, valid, feeds, posts
+  feedback, valid, feeds, posts,
 };
