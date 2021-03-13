@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 
-import * as yup from 'yup';
 import i18next from 'i18next';
 import 'bootstrap';
 import resources from './locales/index.js';
@@ -61,15 +60,6 @@ export default () => {
       resources,
     })
     .then(() => {
-      yup.setLocale({
-        string: {
-          url: 'errors.unvalidUrl',
-        },
-        mixed: {
-          notOneOf: 'errors.alreadyExist',
-        },
-      });
-
       init(i18n);
     });
 };
