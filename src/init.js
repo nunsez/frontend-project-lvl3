@@ -1,13 +1,13 @@
 /* eslint-disable no-param-reassign */
 
 import axios from 'axios';
-import * as yup from 'yup';
 import i18next from 'i18next';
 import _ from 'lodash';
 import 'bootstrap';
 import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
+import validate from './validate.js';
 
 const addPosts = (posts, collection) => {
   const uniquedPosts = posts.map((item) => ({ ...item, id: _.uniqueId() }));
@@ -41,7 +41,7 @@ const markAsReadHandle = (watchedState) => (evt) => {
   watchedState.lastReadPostId = id;
 };
 
-const rssAddHandle = (watchedState, validate) => (evt) => {
+const rssAddHandle = (watchedState) => (evt) => {
   evt.preventDefault();
   watchedState.form.state = null;
 
@@ -105,8 +105,6 @@ const getNewPosts = (watchedState, delay) => {
 };
 
 const init = (i18n) => {
-  const schema = yup.string().url();
-  const updateInterval = 5000;
   const state = {
     process: {
       // ready, getting, finished, failed
@@ -142,25 +140,15 @@ const init = (i18n) => {
 
   const watchedState = initView(elements, state, i18n);
 
-  const validate = (url, collection) => {
-    const feedLinks = collection.map(({ link }) => link);
-
-    try {
-      schema.notOneOf(feedLinks).validateSync(url);
-      return null;
-    } catch (error) {
-      return error;
-    }
-  };
-
-  elements.form.main.addEventListener('submit', rssAddHandle(watchedState, validate));
+  elements.form.main.addEventListener('submit', rssAddHandle(watchedState));
   elements.posts.addEventListener('click', markAsReadHandle(watchedState));
 
-  setTimeout(() => getNewPosts(watchedState, updateInterval));
+  return watchedState;
 };
 
 export default () => {
   const defaultLanguage = 'ru';
+  const updateInterval = 5000;
   const i18n = i18next.createInstance();
 
   return i18n
@@ -168,16 +156,6 @@ export default () => {
       lng: defaultLanguage,
       resources,
     })
-    .then(() => {
-      yup.setLocale({
-        string: {
-          url: 'errors.unvalidUrl',
-        },
-        mixed: {
-          notOneOf: 'errors.alreadyExist',
-        },
-      });
-
-      init(i18n);
-    });
+    .then(() => init(i18n))
+    .then((watchedState) => getNewPosts(watchedState, updateInterval));
 };
