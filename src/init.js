@@ -178,7 +178,7 @@ export default () => {
         },
       });
 
-      init(i18n);
+      return init(i18n);
     })
     .then((watchedState) => getNewPosts(watchedState, updateInterval));
 };
