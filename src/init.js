@@ -1,13 +1,13 @@
 /* eslint-disable no-param-reassign */
 
 import axios from 'axios';
+import * as yup from 'yup';
 import i18next from 'i18next';
 import _ from 'lodash';
 import 'bootstrap';
 import resources from './locales/index.js';
 import parse from './parsers.js';
 import initView from './view.js';
-import validate from './validate.js';
 
 const addPosts = (posts, collection) => {
   const uniquedPosts = posts.map((item) => ({ ...item, id: _.uniqueId() }));
@@ -41,7 +41,7 @@ const markAsReadHandle = (watchedState) => (evt) => {
   watchedState.lastReadPostId = id;
 };
 
-const rssAddHandle = (watchedState) => (evt) => {
+const rssAddHandle = (watchedState, validate) => (evt) => {
   evt.preventDefault();
   watchedState.form.state = null;
 
@@ -105,6 +105,7 @@ const getNewPosts = (watchedState, delay) => {
 };
 
 const init = (i18n) => {
+  const schema = yup.string().url();
   const state = {
     process: {
       // ready, getting, finished, failed
@@ -138,9 +139,20 @@ const init = (i18n) => {
     feedback: document.querySelector('.container-fluid .feedback'),
   };
 
+  const validate = (url, collection) => {
+    const feedLinks = collection.map(({ link }) => link);
+
+    try {
+      schema.notOneOf(feedLinks).validateSync(url);
+      return null;
+    } catch (error) {
+      return error;
+    }
+  };
+
   const watchedState = initView(elements, state, i18n);
 
-  elements.form.main.addEventListener('submit', rssAddHandle(watchedState));
+  elements.form.main.addEventListener('submit', rssAddHandle(watchedState, validate));
   elements.posts.addEventListener('click', markAsReadHandle(watchedState));
 
   return watchedState;
@@ -156,6 +168,17 @@ export default () => {
       lng: defaultLanguage,
       resources,
     })
-    .then(() => init(i18n))
+    .then(() => {
+      yup.setLocale({
+        string: {
+          url: 'errors.unvalidUrl',
+        },
+        mixed: {
+          notOneOf: 'errors.alreadyExist',
+        },
+      });
+
+      init(i18n);
+    })
     .then((watchedState) => getNewPosts(watchedState, updateInterval));
 };
