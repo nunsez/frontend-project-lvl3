@@ -5,7 +5,6 @@
 [![Actions Status](https://github.com/nunsez/frontend-project-lvl3/workflows/hexlet-check/badge.svg)](https://github.com/nunsez/frontend-project-lvl3/actions)
 [![Node.js CI](https://github.com/nunsez/frontend-project-lvl3/actions/workflows/node.js.yml/badge.svg)](https://github.com/nunsez/frontend-project-lvl3/actions/workflows/node.js.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/f94c0c749434ae8606b4/maintainability)](https://codeclimate.com/github/nunsez/frontend-project-lvl3/maintainability)
-(_...in developing_)
 
 **RSS Reader** is a service for aggregating RSS feeds, with the help of which it is convenient to read various sources, for example, blogs. It allows you to add an unlimited number of RSS feeds, update them and add new posts to the general feed.
 
